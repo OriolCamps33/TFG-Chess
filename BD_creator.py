@@ -4,11 +4,18 @@ import chess
 
 class bd_creator:
 
+	def __init__(self) -> None:
+		self.inputmeta = None
+		self.inputboard = None
+		self.data_labels = None
+		self.test_data = None
+
+
 	# Funcio que et permet interpretar el taulell, escrit en FEN, 
 	# i convertirlo a un estat que et permet ser utilitzat per entrenar la red neuronal
 	def boardstate(self, fen):
-		board = chess.Board(str(fen[0]))
-		fstr = str(fen[0])
+		board = chess.Board(str(fen.iloc[0]))
+		fstr = str(fen.iloc[0])
 
 		# Es guarda informacio del estat concret, com els possibles castles i si hi ha jaque
 		if board.has_kingside_castling_rights(chess.WHITE) == True:
@@ -104,14 +111,14 @@ class bd_creator:
 		return t
 
 
-	def __init__(self, nrows) -> None:
+	def train_data(self, nrows):
 		data = pd.read_csv('BD/Clasified/chessData.csv', nrows=nrows)
 
 		# creem array de labels per la red neruronal
 		data_labels = data
 		data_labels.columns = ['col1', 'col2']
 		data_labels = data_labels.astype(str) 
-		data_labels = data_labels.apply(lambda x: self.strfix(x['col1'], x['col2']), axis=1)
+		self.data_labels = data_labels.apply(lambda x: self.strfix(x['col1'], x['col2']), axis=1)
 
 		# creem les dades que permetran entrenar a la red neuronal
 		label_columns = [1]
@@ -119,21 +126,23 @@ class bd_creator:
 		data_features = data_features.apply(self.boardstate, axis=1)
 		data_features = data_features.apply(pd.Series)
 		
+		
 		# gardem en un array el input del taulell
 		input2_columns = [0, 1, 2, 3, 4, 5]
 		inputboard = data_features.drop(columns=data_features.iloc[:, input2_columns]) 
 
-		inputboard = np.array(inputboard)
+		self.inputboard = np.array(inputboard)
 		
 		# guardem en un array el input de la info del estat
 		inputmeta = data_features.iloc[:, input2_columns]
 
-		inputmeta = np.array(inputmeta)
+		self.inputmeta = np.array(inputmeta)
 		
 				
 		
 if __name__ == "__main__":
-	creator = bd_creator(100000)
+	creator = bd_creator()
+	creator.train_data(100000)
 	
         
         

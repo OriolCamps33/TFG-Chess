@@ -3,10 +3,9 @@ import chess.engine
 import random
 from tqdm import tqdm
 from ChessGame import *
-from multiprocessing import Pool
 
 
-class ChessAgent:
+class Q_Learn_Agent:
     def __init__(self, learning_rate=0.1, discount_factor=0.95, exploration_rate=1.0, exploration_decay=0.995):
         self.q_values = {}
         self.learning_rate = learning_rate
@@ -14,7 +13,7 @@ class ChessAgent:
         self.exploration_rate = exploration_rate
         self.exploration_decay = exploration_decay
 
-        self.file_path = "Models/"
+        self.file_path = "Models/Q_learn/"
 
 
     def get_q_value(self, state, action):
@@ -94,7 +93,7 @@ class ChessAgent:
             if(total_reward > high_reward): high_reward = total_reward
 
             self.exploration_rate *= self.exploration_decay
-            #print("Total reward in this game:", total_reward)
+            
         print("Hight reward: " + str(high_reward))
         print("Low reward: " + str(low_reward))
     
@@ -124,7 +123,7 @@ class ChessAgent:
         q_values = data[0].split(",")
         q_values[0] = q_values[0][1:]
         q_values[-1] = q_values[-1][:-1]
-        for i in range(0, len(q_values), 2):
+        for i in tqdm(range(0, len(q_values), 2), desc="Loading... "):
             q = q_values[i] + "," + q_values[i+1]
             d = q.split(":")
             self.q_values[d[0]] = d[1]
@@ -134,17 +133,10 @@ class ChessAgent:
         self.discount_factor = float(data[2])
         self.exploration_rate = float(data[3])
         self.exploration_decay = float(data[4])
-        print(type(self.q_values))
-
-        
-
 
 
 if __name__ == "__main__":
-    agent = ChessAgent()
-    agent.loadModel('M_10k.txt')
-    
-    game = ChessGame()
-    game.game(agent)
-
-
+    agent = Q_Learn_Agent()
+    agent.loadModel('M_110k.txt')
+    agent.train(iter=1390000)
+    agent.saveModel("M_1,5M.txt")

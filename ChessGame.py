@@ -1,7 +1,9 @@
 import chess
 import pygame
 import sys
-
+from Q_Learn import *
+from NNG import *
+import time
 
 class ChessGame:
     def __init__(self):
@@ -33,7 +35,12 @@ class ChessGame:
         str_fin_pos = chr(96 + fin_pos[1]) + str(fin_pos[0])
         
         move = str_ini_pos + str_fin_pos
+        
         m = chess.Move.from_uci(move)
+        
+        if str_fin_pos[1] == '8' and self.board.piece_type_at(m.from_square) == chess.PAWN:
+            m.promotion = chess.QUEEN
+
         if m in list(self.board.legal_moves):
             self.board.push(m)
             return True
@@ -98,7 +105,7 @@ class ChessGame:
                             if(move_maked and not self.board.is_game_over()):
                                 state = str(self.board)
                                 legal_moves = agent.get_legal_moves(self.board)
-                                action = agent.choose_action(state, legal_moves)                
+                                action = agent.choose_action(self.board, legal_moves)                
                                 self.board.push(action)
 
             self.print_tab(screen)
@@ -108,8 +115,54 @@ class ChessGame:
             pygame.time.Clock().tick(60)
 
         pygame.quit()
-        sys.exit()    
+        sys.exit()   
+
+    def agents_game(self, agent1, agent2):
+        # Crear la ventana
+        pygame.init()
+        screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption("Tablero de Ajedrez")
+
+        running = True
+        trun_white = True
+        while running:
+            if not self.board.is_game_over():
+                if trun_white:
+                    legal_moves = agent1.get_legal_moves(self.board)
+                    action = agent1.choose_action(self.board, legal_moves)                
+                    self.board.push(action)
+                    time.sleep(2)
+                    print("Turn White")
+                    trun_white = False
+                else:
+                    state = str(self.board)
+                    legal_moves = agent2.get_legal_moves(self.board)
+                    action = agent2.choose_action(state, legal_moves)                
+                    self.board.push(action)
+                    time.sleep(2)
+                    print("Turn Black")
+                    trun_white = True
+            else:
+                running = False
+
+            self.print_tab(screen)
+            self.draw_pieces(self.board, screen)
+
+            pygame.display.flip()
+            pygame.time.Clock().tick(60)
+
+        pygame.quit()
+        sys.exit()   
+
+
 
 if __name__ == "__main__":
+    agent2 = Q_Learn_Agent()
+    agent2.loadModel('M_1,5M.txt')
+    
+    agent1 = NNG_Agent()
+    agent1.load("Models/NNG/E_1000.h5")
+
     game = ChessGame()
-    game.game()
+    #game.game(agent1)
+    game.agents_game(agent1, agent2)
