@@ -152,7 +152,7 @@ class ChessGame:
             pygame.time.Clock().tick(60)
 
         pygame.quit()
-        sys.exit()   
+        sys.exit()
 
 
 

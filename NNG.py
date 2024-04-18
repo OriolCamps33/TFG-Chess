@@ -52,7 +52,7 @@ class NNG_Agent:
         
     def load(self, name):
         self.do_model()
-        self.model.load_weights("Models/NNG/E_1000.h5")
+        self.model.load_weights(name)
         print("Model", name, "loaded.")
 
 

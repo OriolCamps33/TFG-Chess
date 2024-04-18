@@ -8,7 +8,7 @@ class bd_creator:
 		self.inputmeta = None
 		self.inputboard = None
 		self.data_labels = None
-		self.test_data = None
+		self.data_test = None
 
 
 	# Funcio que et permet interpretar el taulell, escrit en FEN, 
@@ -138,6 +138,35 @@ class bd_creator:
 
 		self.inputmeta = np.array(inputmeta)
 		
+
+	def test_data(self, nrows):
+
+		data = pd.read_csv('BD/Clasified/chessData.csv', nrows=nrows+1000)
+
+		# creem array de labels per la red neruronal
+		data_labels = data
+		data_labels.columns = ['col1', 'col2']
+		data_labels = data_labels.astype(str) 
+		self.data_labels = data_labels.apply(lambda x: self.strfix(x['col1'], x['col2']), axis=1)
+
+		# creem les dades que permetran entrenar a la red neuronal
+		label_columns = [1]
+		data_features = data.drop(columns=data.iloc[:, label_columns])
+		data_features = data_features.apply(self.boardstate, axis=1)
+		data_features = data_features.apply(pd.Series)
+		
+		
+		# gardem en un array el input del taulell
+		input2_columns = [0, 1, 2, 3, 4, 5]
+		inputboard = data_features.drop(columns=data_features.iloc[:, input2_columns]) 
+
+		self.inputboard = np.array(inputboard)
+		
+		# guardem en un array el input de la info del estat
+		inputmeta = data_features.iloc[:, input2_columns]
+
+		self.inputmeta = np.array(inputmeta)
+
 				
 		
 if __name__ == "__main__":
