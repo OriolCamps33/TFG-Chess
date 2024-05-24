@@ -1,6 +1,7 @@
 import tensorflow as tf
-import numpy as np
 from BD_creator import * 
+import pydotplus
+from IPython.display import Image
 
 class NNG_Agent:
     def __init__(self,
@@ -51,8 +52,7 @@ class NNG_Agent:
         print("Model saved in: ", name)
         
     def load(self, name):
-        self.do_model()
-        self.model.load_weights(name)
+        self.model = tf.keras.models.load_model(name)
         print("Model", name, "loaded.")
 
 
@@ -159,8 +159,8 @@ class NNG_Agent:
 
             fen_board = board.fen()
             inputs = self.get_input(fen=fen_board)
+            punt = self.model.predict(inputs, verbose=0)[0,0]
 
-            punt = self.model(inputs, training=False).numpy()[0,0]
             
             if max_punt < punt:
                 max_punt = punt
@@ -169,15 +169,23 @@ class NNG_Agent:
 
         return best_move
 
+    def print_model(self, dst):
+
+        dot = tf.keras.utils.model_to_dot(self.model, show_shapes=True, show_layer_names=True)
+        graph = pydotplus.graph_from_dot_data(dot.to_string())
+        Image(graph.create_png())
+
+        #tf.keras.utils.plot_model(self.model, to_file=dst, show_shapes=True, show_layer_names=True)
 
 if __name__ == "__main__":
+    import os
+    #os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'  # Cambia la ruta según la ubicación de tu instalación de Graphviz
+    print(os.pathsep)
     agent = NNG_Agent()
-    agent.load("Models/NNG/E_1000.h5")
+    agent.load("Models/NNG/model_600.keras")
 
-    board = chess.Board()
-    moves = agent.get_legal_moves(board)
-    chose = agent.choose_action(board, moves)
-    print(chose)
+    agent.print_model('Imagenes/Modelos/model1.png')
+    print("end")
     
 
 

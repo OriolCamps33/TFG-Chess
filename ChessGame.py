@@ -135,9 +135,8 @@ class ChessGame:
                     print("Turn White")
                     trun_white = False
                 else:
-                    state = str(self.board)
-                    legal_moves = agent2.get_legal_moves(self.board)
-                    action = agent2.choose_action(state, legal_moves)                
+                    legal_moves = agent1.get_legal_moves(self.board)
+                    action = agent1.choose_action(self.board, legal_moves)                
                     self.board.push(action)
                     time.sleep(2)
                     print("Turn Black")
@@ -157,12 +156,11 @@ class ChessGame:
 
 
 if __name__ == "__main__":
-    agent2 = Q_Learn_Agent()
-    agent2.loadModel('M_1,5M.txt')
+    agent2 = NNG_Agent()
+    agent2.load('Models/NNG/model_600.keras')
     
     agent1 = NNG_Agent()
-    agent1.load("Models/NNG/E_1000.h5")
+    agent1.load("Models/NNG/model_800.keras")
 
     game = ChessGame()
-    #game.game(agent1)
     game.agents_game(agent1, agent2)
