@@ -4,55 +4,55 @@ import pydotplus
 from IPython.display import Image
 
 class NNG_Agent:
-    def __init__(self,
+    def __init__(self, filepath,
                 metric =[tf.keras.metrics.MeanAbsoluteError()],
                 opt = tf.keras.optimizers.Adam(),
                 los = tf.keras.losses.MeanSquaredError()) -> None:
 
-        self.data = bd_creator()
-
         self.model = tf.keras.models.Model()
+        
         self.metric = metric
         self.opt = opt
         self.los = los
+        self.do_model()
+
+        self.load_model(filepath)
 
     def do_model(self):
-
         input1 = tf.keras.layers.Input(shape=(64,))
-        shape1 = tf.keras.layers.Reshape(target_shape=(8, 8, 1))(input1)
-        conv1 = tf.keras.layers.Conv2D(kernel_size=(8,8), padding="same", activation="relu", filters=64, input_shape=(8,8,1))(shape1)
-        bn1 = tf.keras.layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=1e-05)(conv1)
-        conv2 = tf.keras.layers.Conv2D(kernel_size=(8,8), padding="same", activation="relu", filters=64, input_shape=(8,8,1))(bn1)
-        bn2 = tf.keras.layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=1e-05)(conv2)
-        flatten1 = tf.keras.layers.Flatten()(bn2)
         input2 = tf.keras.layers.Input(shape=(6,))
 
-        conc = tf.keras.layers.concatenate([flatten1,input2])
+        conc = tf.keras.layers.concatenate([input1, input2])
 
-        Denselayer1 = tf.keras.layers.Dense(1024, activation='relu')(conc)
-        Denselayer2 = tf.keras.layers.Dense(512, activation='relu')(Denselayer1)
-        Denselayer3 = tf.keras.layers.Dense(256, activation='relu')(Denselayer2)
-        Denselayer4 = tf.keras.layers.Dense(256, activation='relu')(Denselayer3)
-        Output = tf.keras.layers.Dense(1, activation='linear')(Denselayer4)
+        # Dense layers with regularization and dropout
+        Denselayer1 = tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001))(conc)
+        Denselayer1 = tf.keras.layers.BatchNormalization()(Denselayer1)
+        Denselayer1 = tf.keras.layers.Dropout(0.5)(Denselayer1)
 
+        Denselayer2 = tf.keras.layers.Dense(256, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001))(Denselayer1)
+        Denselayer2 = tf.keras.layers.BatchNormalization()(Denselayer2)
+        Denselayer2 = tf.keras.layers.Dropout(0.5)(Denselayer2)
 
-        data_model = tf.keras.models.Model(inputs=[input1, input2], outputs=Output)
+        Denselayer3 = tf.keras.layers.Dense(512, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001))(Denselayer2)
+        Denselayer3 = tf.keras.layers.BatchNormalization()(Denselayer3)
+        Denselayer3 = tf.keras.layers.Dropout(0.5)(Denselayer3)
 
-        self.model = data_model
+        Denselayer4 = tf.keras.layers.Dense(256, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001))(Denselayer3)
+        Denselayer4 = tf.keras.layers.BatchNormalization()(Denselayer4)
+        Denselayer4 = tf.keras.layers.Dropout(0.5)(Denselayer4)
 
-    def fit(self, epoch, batch_size=8192):
-        self.data.train_data(100000)
+        Denselayer5 = tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001))(Denselayer4)
+        Denselayer5 = tf.keras.layers.BatchNormalization()(Denselayer5)
+        Denselayer5 = tf.keras.layers.Dropout(0.5)(Denselayer5)
 
+        Output = tf.keras.layers.Dense(1, activation='linear')(Denselayer5)
+
+        self.model = tf.keras.models.Model(inputs=[input1, input2], outputs=Output)
         self.model.compile(optimizer=self.opt, loss=self.los,  metrics=self.metric)
-        self.model.summary()
-        self.model.fit([self.data.inputboard, self.data.inputmeta], self.data.data_labels, epochs=epoch, batch_size=batch_size, shuffle=True)
 
-    def save(self, name):
-        self.model.save(name)
-        print("Model saved in: ", name)
-        
+
     def load(self, name):
-        self.model = tf.keras.models.load_model(name)
+        self.model = self.model.load_weights(name)
         print("Model", name, "loaded.")
 
 
@@ -169,23 +169,10 @@ class NNG_Agent:
 
         return best_move
 
-    def print_model(self, dst):
-
-        dot = tf.keras.utils.model_to_dot(self.model, show_shapes=True, show_layer_names=True)
-        graph = pydotplus.graph_from_dot_data(dot.to_string())
-        Image(graph.create_png())
-
-        #tf.keras.utils.plot_model(self.model, to_file=dst, show_shapes=True, show_layer_names=True)
-
 if __name__ == "__main__":
-    import os
-    #os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'  # Cambia la ruta según la ubicación de tu instalación de Graphviz
-    print(os.pathsep)
-    agent = NNG_Agent()
-    agent.load("Models/NNG/model_600.keras")
+    agent = NNG_Agent("Models/NNG/model_100.keras")
 
-    agent.print_model('Imagenes/Modelos/model1.png')
-    print("end")
+
     
 
 

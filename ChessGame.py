@@ -3,7 +3,9 @@ import pygame
 import sys
 from Q_Learn import *
 from NNG import *
-import time
+from Stockfish import Stockfish
+from Leela import Leela
+from tqdm import tqdm
 
 class ChessGame:
     def __init__(self):
@@ -118,49 +120,44 @@ class ChessGame:
         sys.exit()   
 
     def agents_game(self, agent1, agent2):
-        # Crear la ventana
-        pygame.init()
-        screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("Tablero de Ajedrez")
 
-        running = True
+        board = chess.Board()
         trun_white = True
-        while running:
-            if not self.board.is_game_over():
-                if trun_white:
-                    legal_moves = agent1.get_legal_moves(self.board)
-                    action = agent1.choose_action(self.board, legal_moves)                
-                    self.board.push(action)
-                    time.sleep(2)
-                    print("Turn White")
-                    trun_white = False
-                else:
-                    legal_moves = agent1.get_legal_moves(self.board)
-                    action = agent1.choose_action(self.board, legal_moves)                
-                    self.board.push(action)
-                    time.sleep(2)
-                    print("Turn Black")
-                    trun_white = True
+        while not board.is_game_over():
+            if trun_white:
+                legal_moves = agent1.get_legal_moves(board)
+                action = agent1.choose_action(board, legal_moves)                
+                board.push(action)
+                trun_white = False
             else:
-                running = False
+                legal_moves = agent2.get_legal_moves(board)
+                action = agent2.choose_action(board, legal_moves)                
+                board.push(action)
+                trun_white = True
 
-            self.print_tab(screen)
-            self.draw_pieces(self.board, screen)
+        return board.result()
 
-            pygame.display.flip()
-            pygame.time.Clock().tick(60)
 
-        pygame.quit()
-        sys.exit()
-
+    def competi(self, agent1, agent2, num_match):
+        results = []
+        for _ in range(num_match):
+            result = self.agents_game(agent1=agent1, agent2=agent2)
+            print(result)
+            if result == None:
+                results.append(0)
+            elif result == "0-1":
+                results.append(-1)
+            else:
+                results.append(1)
+        print(results)
 
 
 if __name__ == "__main__":
-    agent2 = NNG_Agent()
-    agent2.load('Models/NNG/model_600.keras')
-    
-    agent1 = NNG_Agent()
-    agent1.load("Models/NNG/model_800.keras")
+    agent1 = Stockfish("Models\stockfish\stockfish-windows-x86-64-avx2.exe")
+
+    agent2 = Leela("Models\LC0\lc0-v0.30.0-windows\lc0.exe")
 
     game = ChessGame()
-    game.agents_game(agent1, agent2)
+    game.competi(agent1, agent2, 10)
+
+    sys.exit()
