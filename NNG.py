@@ -1,7 +1,5 @@
 import tensorflow as tf
 from BD_creator import * 
-import pydotplus
-from IPython.display import Image
 
 class NNG_Agent:
     def __init__(self, filepath,
@@ -16,43 +14,47 @@ class NNG_Agent:
         self.los = los
         self.do_model()
 
-        self.load_model(filepath)
+        self.load(filepath)
 
     def do_model(self):
         input1 = tf.keras.layers.Input(shape=(64,))
+        shape1 = tf.keras.layers.Reshape(target_shape=(8, 8, 1))(input1)
+        conv1 = tf.keras.layers.Conv2D(kernel_size=(3,3), padding="same", activation="relu", filters=64)(shape1)
+        bn1 = tf.keras.layers.BatchNormalization(axis=-1, momentum=0.99, epsilon=1e-05)(conv1)
+        flatten1 = tf.keras.layers.Flatten()(bn1)
+
         input2 = tf.keras.layers.Input(shape=(6,))
 
-        conc = tf.keras.layers.concatenate([input1, input2])
+        conc = tf.keras.layers.concatenate([flatten1, input2])
 
         # Dense layers with regularization and dropout
-        Denselayer1 = tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001))(conc)
+        Denselayer1 = tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01))(conc)
         Denselayer1 = tf.keras.layers.BatchNormalization()(Denselayer1)
-        Denselayer1 = tf.keras.layers.Dropout(0.5)(Denselayer1)
+        Denselayer1 = tf.keras.layers.Dropout(0.3)(Denselayer1)
 
-        Denselayer2 = tf.keras.layers.Dense(256, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001))(Denselayer1)
+        Denselayer2 = tf.keras.layers.Dense(256, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01))(Denselayer1)
         Denselayer2 = tf.keras.layers.BatchNormalization()(Denselayer2)
-        Denselayer2 = tf.keras.layers.Dropout(0.5)(Denselayer2)
+        Denselayer2 = tf.keras.layers.Dropout(0.3)(Denselayer2)
 
-        Denselayer3 = tf.keras.layers.Dense(512, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001))(Denselayer2)
+        Denselayer3 = tf.keras.layers.Dense(512, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01))(Denselayer2)
         Denselayer3 = tf.keras.layers.BatchNormalization()(Denselayer3)
-        Denselayer3 = tf.keras.layers.Dropout(0.5)(Denselayer3)
+        Denselayer3 = tf.keras.layers.Dropout(0.3)(Denselayer3)
 
-        Denselayer4 = tf.keras.layers.Dense(256, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001))(Denselayer3)
+        Denselayer4 = tf.keras.layers.Dense(256, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01))(Denselayer3)
         Denselayer4 = tf.keras.layers.BatchNormalization()(Denselayer4)
-        Denselayer4 = tf.keras.layers.Dropout(0.5)(Denselayer4)
+        Denselayer4 = tf.keras.layers.Dropout(0.3)(Denselayer4)
 
-        Denselayer5 = tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.001))(Denselayer4)
+        Denselayer5 = tf.keras.layers.Dense(128, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.01))(Denselayer4)
         Denselayer5 = tf.keras.layers.BatchNormalization()(Denselayer5)
-        Denselayer5 = tf.keras.layers.Dropout(0.5)(Denselayer5)
+        Denselayer5 = tf.keras.layers.Dropout(0.3)(Denselayer5)
 
-        Output = tf.keras.layers.Dense(1, activation='linear')(Denselayer5)
+        Output = tf.keras.layers.Dense(1, activation='linear')(Denselayer3)
 
         self.model = tf.keras.models.Model(inputs=[input1, input2], outputs=Output)
-        self.model.compile(optimizer=self.opt, loss=self.los,  metrics=self.metric)
 
 
     def load(self, name):
-        self.model = self.model.load_weights(name)
+        self.model.load_weights(name)
         print("Model", name, "loaded.")
 
 
@@ -146,28 +148,47 @@ class NNG_Agent:
         inputmeta = np.array(inputmeta)
 		
         return [inputboard, inputmeta]
-	
-    
 
     def choose_action(self, board, moves):
-
-        max_punt = 0
+        
         best_move = moves[0]
-        for move in moves:
 
-            board.push(move)
+        if board.turn == chess.WHITE:
+            max_punt = -float('inf')
+            for move in moves:
 
-            fen_board = board.fen()
-            inputs = self.get_input(fen=fen_board)
-            punt = self.model.predict(inputs, verbose=0)[0,0]
+                board.push(move)
 
-            
-            if max_punt < punt:
-                max_punt = punt
-                best_move = move
-            board.pop()
+                fen_board = board.fen()
+                inputs = self.get_input(fen=fen_board)
+                punt = self.model.predict(inputs, verbose=0)[0,0]
+              
+                if max_punt < punt:
+                    max_punt = punt
+                    best_move = move
+                board.pop()
+        else:
+            max_punt = float('inf')
+            for move in moves:
+
+                board.push(move)
+
+                fen_board = board.fen()
+                inputs = self.get_input(fen=fen_board)
+                punt = self.model.predict(inputs, verbose=0)[0,0]
+                
+                if max_punt > punt:
+                    max_punt = punt
+                    best_move = move
+                board.pop()
 
         return best_move
+    
+    def predict(self, board):
+        fen_board = board.fen()
+        inputs = self.get_input(fen=fen_board)
+        punts = self.model.predict(inputs, verbose=0)[0,0]
+        return punts
 
 if __name__ == "__main__":
     agent = NNG_Agent("Models/NNG/model_100.keras")

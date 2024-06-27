@@ -5,7 +5,8 @@ from Q_Learn import *
 from NNG import *
 from Stockfish import Stockfish
 from Leela import Leela
-from tqdm import tqdm
+from MCTS import *
+import time
 
 class ChessGame:
     def __init__(self):
@@ -103,16 +104,18 @@ class ChessGame:
                             move_maked = self.move(selected_square, (row, col))
                             selected_piece = False
                             selected_square = None
+                            self.print_tab(screen)
+                            self.draw_pieces(self.board, screen)
+                            pygame.display.flip()
 
                             if(move_maked and not self.board.is_game_over()):
-                                state = str(self.board)
                                 legal_moves = agent.get_legal_moves(self.board)
-                                action = agent.choose_action(self.board, legal_moves)                
+                                action = agent.choose_action(self.board, legal_moves)           
                                 self.board.push(action)
 
+            
             self.print_tab(screen)
             self.draw_pieces(self.board, screen)
-
             pygame.display.flip()
             pygame.time.Clock().tick(60)
 
@@ -149,15 +152,15 @@ class ChessGame:
                 results.append(-1)
             else:
                 results.append(1)
+        agent1.quit()
+        agent2.quit()
         print(results)
 
 
 if __name__ == "__main__":
-    agent1 = Stockfish("Models\stockfish\stockfish-windows-x86-64-avx2.exe")
-
-    agent2 = Leela("Models\LC0\lc0-v0.30.0-windows\lc0.exe")
+    #agent1 = NNG_Agent("Models/NNG/model_200.h5")
+    agent2 = MCTS("Models/NNG/model_200_model_gran.h5", 50)
 
     game = ChessGame()
-    game.competi(agent1, agent2, 10)
+    game.game(agent2)
 
-    sys.exit()

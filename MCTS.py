@@ -1,125 +1,146 @@
-import chess
-import numpy as np
-import random
+
 import tensorflow as tf
+import numpy as np
+import chess
+import random
+import pandas as pd
+import math
+from collections import defaultdict
+from NNG import NNG_Agent
+import time
 
-class ChessMCTSNode:
-    def __init__(self, state, parent=None):
-        self.state = state
-        self.parent = parent
-        self.children = {}
-        self.visits = 0
-        self.value = 0
+class MCTS:
+    def __init__(self, filepath, iteraciones=5) -> None:
+        self.transposition_table = self.TranspositionTable()
+        self.model = NNG_Agent(filepath)
+        self.iteraciones = iteraciones
+        self.table_times = 0
 
-    def is_leaf(self):
-        return len(self.children) == 0
+    class NodoMCTS:
+        def __init__(self, tablero, move=None, parent=None):
+            self.tablero = tablero
+            self.move = move
+            self.parent = parent
+            self.children = []
+            self.wins = 0
+            self.visits = 0
+            self.untried_moves = list(tablero.legal_moves)
 
-    def is_maximizing(self):
-        return self.state.turn == chess.WHITE
+        def expand(self):
+            # Generar posibles estados sucesores
+            
+            # Crear nodos hijos y añadir al árbol
+            for move in self.untried_moves:
+                nuevo_tablero = self.tablero.copy()
+                nuevo_tablero.push(move)
+                child_node = MCTS.NodoMCTS(nuevo_tablero, move, self)
+                self.children.append(child_node)
+            
+            # Retornar uno de los nuevos nodos para la fase de simulación
+            return random.choice(self.children) if self.children else None
 
-    def expand(self):
-        legal_moves = list(self.state.legal_moves)
-        for move in legal_moves:
-            new_state = self.state.copy()
-            new_state.push(move)
-            self.children[move] = ChessMCTSNode(new_state, parent=self)
+        def select_child(self):
+            # Utilizar UCB1 para seleccionar el nodo
+            C = 1.4  # Constante de exploración
+            return max(self.children, key=lambda c: c.wins)
 
-    def select_child(self, exploration_constant=1.0):
-        return max(self.children.values(), key=lambda child: child.get_ucb_value(exploration_constant))
+        def update(self, result):
+            self.visits += 1
+            self.wins += result
 
-    def get_ucb_value(self, exploration_constant):
-        if self.visits == 0:
-            return float('inf')
-        exploitation = self.value / self.visits
-        exploration = exploration_constant * np.sqrt(np.log(self.parent.visits) / self.visits)
-        return exploitation + exploration
+    class TranspositionTable:
+        def __init__(self):
+            self.table = defaultdict(lambda: None)
 
-    def backpropagate(self, value):
-        self.visits += 1
-        self.value += value
-        if self.parent:
-            self.parent.backpropagate(value)
+        def lookup(self, fen):
+            return self.table[fen]
 
-class ChessMCTS:
-    def __init__(self, neural_network):
-        self.neural_network = neural_network
+        def store(self, fen, value):
+            self.table[fen] = value
+            
+    def ordenar_movimientos(self, tablero):
+        # Ordenar por capturas primero
+        return sorted(tablero.legal_moves, key=lambda move: tablero.is_capture(move), reverse=True)
 
-    def search(self, state, num_simulations=50):
-        root = ChessMCTSNode(state)
+    def evaluar_posicion(self, board):
+        evaluacion = self.model.predict(board)
+        return evaluacion 
 
-        for x in range(num_simulations):
-            leaf = self.traverse(root)
-            value = self.evaluate(leaf)
-            leaf.backpropagate(value)
+    def evaluar_minimax(self, tablero, profundidad, alpha, beta, maximizando):
+        fen = tablero.fen()
+        hash_entry = self.transposition_table.lookup(fen)
+        if hash_entry is not None:
+            self.table_times += 1
+            return hash_entry
 
-        best_move = max(root.children.keys(), key=lambda move: root.children[move].visits)
-        return best_move
+        if profundidad == 0 or tablero.is_game_over():
+            evaluacion = self.evaluar_posicion(tablero)
+            self.transposition_table.store(fen, evaluacion)
+            return evaluacion
+        
+        if maximizando:
+            max_eval = -float('inf')
+            for move in self.ordenar_movimientos(tablero):
+                tablero.push(move)
+                evaluacion = self.evaluar_minimax(tablero, profundidad - 1, alpha, beta, False)
+                tablero.pop()
+                max_eval = max(max_eval, evaluacion)
+                alpha = max(alpha, evaluacion)
+                if beta <= alpha:
+                    break
+            self.transposition_table.store(fen, max_eval)
+            return max_eval
+        else:
+            min_eval = float('inf')
+            for move in self.ordenar_movimientos(tablero):
+                tablero.push(move)
+                evaluacion = self.evaluar_minimax(tablero, profundidad - 1, alpha, beta, True)
+                tablero.pop()
+                min_eval = min(min_eval, evaluacion)
+                beta = min(beta, evaluacion)
+                if beta <= alpha:
+                    break
+            self.transposition_table.store(fen, min_eval)
+            return min_eval
 
-    def traverse(self, node):
-        while not node.is_leaf():
-            node = node.select_child()
+    def choose_action(self, tablero, list_moves):
+        root = self.NodoMCTS(tablero)
+        for _ in range(self.iteraciones):
+            node = root
+            tablero_simulacion = tablero.copy()
 
+            # Fase de selección
+            while node.children and not tablero_simulacion.is_game_over():
+                node = node.select_child()
+                tablero_simulacion.push(node.move)
 
-        if node.visits > 0:  # Ensure we don't expand a terminal node
-            node.expand()
+            # Fase de expansión
+            if not tablero_simulacion.is_game_over():
+                node = node.expand()
 
-            node = random.choice(list(node.children.values()))
-        return node
+            # Fase de simulación
+            result = self.evaluar_posicion(tablero_simulacion)
+            #result = self.evaluar_minimax(tablero_simulacion, 3, -float('inf'), float('inf'), tablero_simulacion.turn == chess.WHITE)
+            #print("Table times: ", self.table_times)
+            if tablero.turn == chess.BLACK: result *= -1
+            # Fase de retropropagación
+            while node:
+                node.update(result)
+                node = node.parent
 
-    def boardstate(self, fen):
-        try:
-            board = chess.Board(str(fen))
-        except ValueError:
-            print("Error: Debes introducir un número válido.")
-            return 0
+        return max(root.children, key=lambda c: c.wins).move
+    
+    def imprimir_arbol(self, nodo, nivel=0):
+        print(' ' * (nivel * 4) + str(nodo.wins))
+        for hijo in nodo.children:
+            self.imprimir_arbol(hijo, nivel + 1)
 
-        def castling_rights(color):
-            return [
-                board.has_kingside_castling_rights(color),
-                board.has_queenside_castling_rights(color),
-                board.is_check() if color == chess.WHITE else board.was_into_check()
-            ]
-
-        WCKI, WCQ, WCH = map(int, castling_rights(chess.WHITE))
-        BCKI, BCQ, BCH = map(int, castling_rights(chess.BLACK))
-        fw, fb = [WCKI, WCQ, WCH], [BCKI, BCQ, BCH]
-
-        piece_map = {
-            'p': -1, 'n': -3, 'b': -4, 'r': -5, 'q': -9, 'k': -100,
-            'P': 1, 'N': 3, 'B': 4, 'R': 5, 'Q': 9, 'K': 100, '.': 0
-        }
-
-        bstr = [piece_map[c] for row in str(board).split('\n') for c in row.replace(' ', '')]
-
-        if 'w' not in str(fen):
-            bstr = [-v for v in reversed(bstr)]
-            fw, fb = fb, fw
-
-        BITBOARD = fw + fb + bstr
-        return BITBOARD
-
-    def board_to_input(self, board_fen):
-        info_board = self.boardstate(board_fen)
-
-        inputmeta = info_board[:6]
-        inputboard = info_board[6:]
-
-        inputboard = np.array(inputboard).reshape((1, -1))  # Adjust shape as needed
-        inputmeta = np.array(inputmeta).reshape((1, -1))    # Adjust shape as needed
-
-        return inputboard, inputmeta
-
-    def evaluate(self, node):
-        ib, im = self.board_to_input(node.state.fen())
-        input_data = [ib, im]
-        value = self.neural_network.predict(input_data, verbose=0)
-        return value
-
+    def get_legal_moves(self, board):
+        return list(board.legal_moves)
 
 if __name__ == "__main__":
-  model = tf.keras.models.load_model("Models/NNG/model_400.keras")
-  board = chess.Board()
+    board = chess.Board()
+    mcts_agent = MCTS("Models/NNG/model_200_model_gran.h5", 10)
+    best_move = mcts_agent.choose_action(board, [])
 
-  mcts_agent = ChessMCTS(model)
-  best_move = mcts_agent.search(board)
-  print("Mejor movimiento encontrado:", best_move)
+    print("Mejor movimiento encontrado:", best_move)

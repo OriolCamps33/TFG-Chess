@@ -1,6 +1,10 @@
 import pandas as pd
 import numpy as np
 import chess
+from sklearn.model_selection import train_test_split
+import csv
+import random
+import matplotlib.pyplot as plt
 
 class bd_creator:
     def __init__(self) -> None:
@@ -17,71 +21,34 @@ class bd_creator:
             print("Error: Debes introducir un número válido.")
             return 0
 
-        # Es guarda informacio del estat concret, com els possibles castles i si hi ha jaque
-        if board.has_kingside_castling_rights(chess.WHITE) == True:
-            WCKI = 1
-        else:
-            WCKI = 0
-        if board.has_queenside_castling_rights(chess.WHITE) == True:
-            WCQ = 1
-        else:
-            WCQ = 0
-        if board.is_check() == True:
-            WCH = 1
-        else:
-            WCH = 0
-
-        if board.has_kingside_castling_rights(chess.BLACK) == True:
-            BCKI = 1
-        else:
-            BCKI = 0
-        if board.has_queenside_castling_rights(chess.BLACK) == True:
-            BCQ = 1
-        else:
-            BCQ = 0
-        if board.was_into_check() == True:
-            BCH = 1
-        else:
-            BCH = 0
+        # Boolean to integer mappings
+        WCKI = int(board.has_kingside_castling_rights(chess.WHITE))
+        WCQ = int(board.has_queenside_castling_rights(chess.WHITE))
+        WCH = int(board.is_check())
+        BCKI = int(board.has_kingside_castling_rights(chess.BLACK))
+        BCQ = int(board.has_queenside_castling_rights(chess.BLACK))
+        BCH = int(board.was_into_check())
 
         fw = [WCKI, WCQ, WCH]
         fb = [BCKI, BCQ, BCH]
 
-        # Es transforma el taulell a un array de ints.
-        bstr = str(board)
-        bstr = bstr.replace("p", "\ -1")
-        bstr = bstr.replace("n", "\ -3")
-        bstr = bstr.replace("b", "\ -4")
-        bstr = bstr.replace("r", "\ -5")
-        bstr = bstr.replace("q", "\ -9")
-        bstr = bstr.replace("k", "\ -100")
-        bstr = bstr.replace("P", "\ 1")
-        bstr = bstr.replace("N", "\ 3")
-        bstr = bstr.replace("B", "\ 4")
-        bstr = bstr.replace("R", "\ 5")
-        bstr = bstr.replace("Q", "\ 9")
-        bstr = bstr.replace("K", "\ 100")
-        bstr = bstr.replace(".", "\ 0")
-        bstr = bstr.replace("\ ", ",")
-        bstr = bstr.replace("'", " ")
-        bstr = bstr.replace("\n", "")
-        bstr = bstr.replace(" ", "")
-        bstr = bstr[1:]
-        bstr = eval(bstr)
-        bstr = list(bstr)
+        # Piece to integer mapping
+        piece_map = {
+            'p': -1, 'n': -3, 'b': -4, 'r': -5, 'q': -9, 'k': -100,
+            'P': 1, 'N': 3, 'B': 4, 'R': 5, 'Q': 9, 'K': 100, '.': 0
+        }
 
+        # Convert board to a list of integers
+        bstr = [piece_map.get(char, 0) for char in str(board).replace('\n', '') if char in piece_map]
+
+        # Flip the board if it's Black's turn
         if "w" not in fstr:
-            for i in range(len(bstr)):
-                bstr[i] = bstr[i] * -1
+            bstr = [-piece for piece in bstr][::-1]
+            fw, fb = fb, fw
 
-            bstr.reverse()
-            fs = fb
-            fb = fw
-            fw = fs
-
-
+        # Combine castling/check info with the board state
         BITBOARD = fw + fb + bstr
-        # es retorna un array amb la info del estat y el taulell
+
         return BITBOARD
 
 
@@ -105,9 +72,6 @@ class bd_creator:
 
         if "w" not in fstr:
             t = t*-1
-
-        t = t/10
-
         return t
 
 
@@ -174,34 +138,59 @@ class bd_creator:
         return (self.inputboard, self.inputmeta, self.data_labels)
 
     def seleccionar_lineas_aleatorias(self, input_file, output_file, num_lines):
+        # Definir los intervalos de evaluación
+        num_lines_per_interval = int(num_lines / 4)
+        intervals = {
+            "[-1000, -500)": [],
+            "[-500, 0)": [],
+            "[0, 500)": [],
+            "[500, 1000]": [],
+        }
+        extra = []
+
+        # Leer el archivo de entrada
         with open(input_file, 'r') as infile:
             reader = csv.reader(infile)
             header = next(reader)  # Leer el encabezado si existe
 
-            selected_lines = []
-            total_lines_read = 0
-
             for line in reader:
-                total_lines_read += 1
-                if len(selected_lines) < num_lines:
-                    selected_lines.append(line)
-                else:
-                    # Reemplazar líneas aleatoriamente con probabilidad num_lines/total_lines_read
-                    replace_idx = random.randint(0, total_lines_read - 1)
-                    if replace_idx < num_lines:
-                        selected_lines[replace_idx] = line
+                # Asumimos que la evaluación está en la última columna y es numérica
+                try:
+                    evaluation = int(line[-1])
+                except ValueError:
+                    continue  # Si no se puede convertir a float, se omite la línea
 
+                # Clasificar la línea en el intervalo correspondiente
+                if -100000 <= evaluation < -1000:
+                    intervals["[-1000, -500)"].append(line)
+                elif -1000 <= evaluation < 0:
+                    intervals["[-500, 0)"].append(line)
+                elif 0 <= evaluation < 1000:
+                    intervals["[0, 500)"].append(line)
+                elif 1000 <= evaluation <= 100000:
+                    intervals["[500, 1000]"].append(line)
+
+        # Seleccionar num_lines_per_interval de cada interval
+        selected_lines = []
+        for interval, lines in intervals.items():
+            if len(lines) < num_lines_per_interval:
+                print(f"Warning: not enough lines in interval {interval}")
+                selected_lines.extend(lines)
+            else:
+                selected_lines.extend(random.sample(lines, num_lines_per_interval))
+        
+        
         # Guardar las líneas seleccionadas en el archivo de salida
         with open(output_file, 'w', newline='') as outfile:
             writer = csv.writer(outfile)
             writer.writerow(header)  # Escribir el encabezado
             writer.writerows(selected_lines)
 
-    def train_test(self, nrows):
+    def train_test(self, nrows, test_size=0.2):
 
-        self.seleccionar_lineas_aleatorias("drive/MyDrive/TFG/chessData.csv", "drive/MyDrive/TFG/rand_lines_data.csv", nrows)
+        self.seleccionar_lineas_aleatorias("BD/Clasified/chessData.csv", "BD/Clasified/rand_lines_data.csv", nrows)
 
-        data = pd.read_csv("drive/MyDrive/TFG/rand_lines_data.csv")
+        data = pd.read_csv("BD/Clasified/rand_lines_data.csv")
         # creem array de labels per la red neruronal
         data_labels = data
         data_labels.columns = ['col1', 'col2']
@@ -228,17 +217,9 @@ class bd_creator:
         self.inputmeta = np.array(inputmeta)
 
 
-        im_train, im_test, lab_train, lab_test = train_test_split(self.inputmeta, self.data_labels, test_size=0.2, random_state=123)
-        ib_train, ib_test, _, _ = train_test_split(self.inputboard, self.data_labels, test_size=0.2, random_state=123)
+        im_train, im_test, lab_train, lab_test = train_test_split(self.inputmeta, self.data_labels, test_size=test_size, random_state=123)
+        ib_train, ib_test, _, _ = train_test_split(self.inputboard, self.data_labels, test_size=test_size, random_state=123)
         return (im_train, im_test, ib_train, ib_test, lab_train, lab_test)
-
-
-				
-		
-if __name__ == "__main__":
-	creator = bd_creator()
-	creator.train_data(100000)
-	
         
         
 
