@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Dosier-TFG</title>
+    <!-- bootstrap core css -->
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.css" />
+
+    <!-- fonts style -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <!--owl slider stylesheet -->
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css" />
+
+    <!-- font awesome style -->
+    <link href="css/font-awesome.min.css" rel="stylesheet" />
+
+    <!-- Custom styles for this template -->
+    <link href="css/style.css" rel="stylesheet" />
+    <!-- responsive style -->
+    <link href="css/responsive.css" rel="stylesheet" />
+
+
+</head>
+<body>
+    <div class="hero_area">
+        <div class="hero_bg_box">
+            <div class="bg_img_box">
+                <img src="Imagenes/hero-bg.png" alt="">
+            </div>
+        </div>
+        <header class="header_section">
+            <div class="container-fluid navbar-brand">
+                <span>
+                    Desenvolupament i Avaluació d'Algorismes d'Escacs: Xarxes Neuronals i MCTS vs. Stockfish i Leela Chess 
+                </span>
+                <span>
+                    <br>Oriol Camps Isus
+                </span>
+            </div>    
+        </header>
+
+        <section class="Titol layout_padding">
+            <div class="container">
+                <div class="heading_container heading_center">
+                    <h2>
+                        Arxius  i Directoris<span> Importants </span>
+                    </h2>
+                </div>
+            </div>
+        </section>
+
+        <section class="slider_section ">
+            <div id="customCarousel1" class="carousel slide" data-ride="carousel">
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <div class="container ">
+                            <div class="row">
+                                <div class="col-md-6 ">
+                                    <div class="detail-box">
+                                    <h1>
+                                        Desenvolupament i Entrenament <br>
+                                        Xarxa Neuronal
+                                    </h1>
+                                    <p>
+                                        Pythons/train_NNG.ipynb
+                                    </p>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 ">
+                                    <div class="detail-box">
+                                    <p>
+                                        Aquest arxiu conté totes les proves i entrenaments que s'han realitzat per a trobar la xarxa que posteriorment 
+                                        s'utilitzarà per a l'algoritme que utilitza les prediccions per a trobar la millor jugada i també dins el MCTS, on permet avaluar cada node.
+                                    </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="carousel-item ">
+                        <div class="container ">
+                            <div class="row">
+                                <div class="col-md-6 ">
+                                <div class="detail-box">
+                                    <h1>
+                                    Competició i visualització <br>
+                                    Dels jocs d'escacs
+                                    </h1>
+                                    <p>
+                                    ChessGame.py
+                                    </p>
+                                </div>
+                                </div>
+        
+                                <div class="col-md-6 ">
+                                <div class="detail-box">
+                                    <p>
+                                    Aquest arxiu et permet avaluar els diferents models d'escacs, ja que et permet fer competicions entre els models, visualitzar partides o inclús jugar una partida contra un d'ells utilitzant un taulell funcional.
+                                    </p>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="carousel-item">
+                        <div class="container ">
+                            <div class="row">
+                                <div class="col-md-6 ">
+                                    <div class="detail-box">
+                                        <h1>
+                                        Models ja creats i <br>
+                                        Desenvolupats per mi mateix
+                                        </h1>
+                                        <p>
+                                        Pythons/Models
+                                        </p>
+                                    </div>
+                                </div>
+        
+                                <div class="col-md-6 ">
+                                    <div class="detail-box">
+                                        <p>
+                                            En aquesta carpeta es guarden els models ja desenvolupats i els que he creat jo. Hi ha el model de la xarxa neuronal al directori NNG/, 
+                                            un model alternatiu ja descartat que és el de Q-Learn/ i els models ja creats Stockfish a stockfish/ i Leela Chess 0 a LC0/.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="carousel-item ">
+                        <div class="container ">
+                            <div class="row">
+                                <div class="col-md-6 ">
+                                <div class="detail-box">
+                                    <h1>
+                                    Base de dades de la <br>
+                                    Xarxa Neuronal
+                                    </h1>
+                                    <p>
+                                    BD/Classified/chessData.csv
+                                    </p>
+                                </div>
+                                </div>
+        
+                                <div class="col-md-6 ">
+                                <div class="detail-box">
+                                    <p>
+                                        Aquest arxiu conte les dades utulitzades per a entrenar a la xarxa neuronal utilitzada en tots dos models, en aquest mateix directori es troba el arxiu auxiliar on es guarden una subsecció aleatoria de dades. 
+                                    </p>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <ol class="carousel-indicators">
+                    <li data-target="#customCarousel1" data-slide-to="0" class="active"></li>
+                    <li data-target="#customCarousel1" data-slide-to="1"></li>
+                    <li data-target="#customCarousel1" data-slide-to="2"></li>
+                    <li data-target="#customCarousel1" data-slide-to="3"></li>
+                </ol>
+            </div>
+        </section>
+        <!-- end slider section -->        
+    </div>
+
+    <section class="why_section layout_padding">
+        <div class="container">
+            <div class="heading_container heading_center">
+                <h2>
+                    Arbre de <span> Directoris </span>
+                </h2>
+            </div>
+            <div class="contenedor-arbol">
+                <ul>
+                    <li>BD
+                        <ul>
+                            <li>Classified
+                                <ul>
+                                <li>chessData.csv</li>
+                                <li>rand_lines_data.csv</li>
+                                </ul>
+                            </li>
+                            <li>No_Clasified
+                                <ul>
+                                <li>Anand.pgn</li>
+                                <li>Capablanca.pgn</li>
+                                <li>Carlsen.pgn</li>
+                                <li>Caruana.pgn</li>
+                                <li>Fisher.pgn</li>
+                                <li>Kasparov.pgn</li>
+                                <li>Morphy.pgn</li>
+                                <li>Nakamura.pgn</li>
+                                <li>Polgar.pgn</li>
+                                <li>Tal.pgn</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>css
+                        <ul>
+                            <li>bootstrap.css</li>
+                            <li>font-awesome.min.css</li>
+                            <li>responsive.css</li>
+                            <li>style.css</li>
+                            <li>style.css.map</li>
+                            <li>style.scss</li>
+                        </ul>
+                    </li>
+                    <li>fonts
+                        <ul>
+                            <li>fontawesome-webfont.ttf</li>
+                            <li>fontawesome-webfont.woff</li>
+                            <li>fontawesome-webfont.woff2</li>
+                        </ul>
+                    </li>
+                    <li>Imagenes
+                        <ul>
+                            <li>B_B.png</li>
+                            <li>B_K.png</li>
+                            <li>B_N.png</li>
+                            <li>B_P.png</li>
+                            <li>B_Q.png</li>
+                            <li>B_R.png</li>
+                            <li>W_B.png</li>
+                            <li>W_K.png</li>
+                            <li>W_N.png</li>
+                            <li>W_P.png</li>
+                            <li>W_Q.png</li>
+                            <li>W_R.png</li>
+                            <li>hero-bg.png</li>
+                        </ul>
+                    </li>
+                    <li>js
+                        <ul>
+                        <li>bootstrap.js</li>
+                        <li>custom.js</li>
+                        <li>jquery-3.4.1.min.js</li>
+                        </ul>
+                    </li>
+                    <li>Pythons
+                        <ul>
+                            <li>BD_creator.py</li>
+                            <li>Leela.py</li>
+                            <li>MCTS.py</li>
+                            <li>NNG.py</li>
+                            <li>Q_Learn.py</li>
+                            <li>Stockfish.py</li>
+                            <li>train_NNG.ipynb</li>
+                            <li>Models
+                                <ul>
+                                    <li>LC0
+                                        <ul>
+                                            <li>COPYING</li>
+                                            <li>cublas64_11.dll</li>
+                                            <li>cublasLt64_11.dll</li>
+                                            <li>CUDA.txt</li>
+                                            <li>cudart64_110.dll</li>
+                                            <li>lc0-training-client.exe</li>
+                                            <li>lc0.exe</li>
+                                            <li>README.txt</li>
+                                        </ul>
+                                    </li>
+                                    <li>NNG
+                                        <ul>
+                                            <li>model_200_model_gran.h5</li>
+                                        </ul>
+                                    </li>
+                                    <li>Q_learn
+                                        <ul>
+                                            <li>M1.txt</li>
+                                            <li>M_1,5M.txt</li>
+                                            <li>M_10k.txt</li>
+                                            <li>M_110k.txt</li>
+                                        </ul>
+                                    </li>
+                                    <li>stockfish
+                                        <ul>
+                                            <li>AUTHORS</li>
+                                            <li>CITATION.cff</li>
+                                            <li>CONTRIBUTING.md</li>
+                                            <li>Copying.txt</li>
+                                            <li>README.md</li>
+                                            <li>stockfish-windows-x86-64-avx2.exe</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                    
+                    <li>ChessGame.py</li>
+                    <li>dosier.html</li>
+                    <li>index.html</li>
+                    <li>Informe_final_TFG.docx</li>
+                    <li>README.md</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- jQery -->
+    <script type="text/javascript" src="js/jquery-3.4.1.min.js"></script>
+    <!-- popper js -->
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous">
+    </script>
+    <!-- bootstrap js -->
+    <script type="text/javascript" src="js/bootstrap.js"></script>
+    <!-- owl slider -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js">
+    </script>
+    <!-- custom js -->
+    <script type="text/javascript" src="js/custom.js"></script>
+</body>
+</html>
