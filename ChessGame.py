@@ -1,12 +1,12 @@
 import chess
 import pygame
 import sys
-from Q_Learn import *
-from NNG import *
-from Stockfish import Stockfish
-from Leela import Leela
-from MCTS import *
 import time
+from Pythons.NNG import NNG_Agent
+from Pythons.Stockfish import Stockfish
+from Pythons.Leela import Leela
+from Pythons.MCTS import MCTS
+import random
 
 class ChessGame:
     def __init__(self):
@@ -34,6 +34,9 @@ class ChessGame:
         }
     
     def move(self, ini_pos, fin_pos):
+        if ini_pos == fin_pos:
+            print("Movimiento no valido")
+            return False
         str_ini_pos = chr(96 + ini_pos[1]) + str(ini_pos[0])
         str_fin_pos = chr(96 + fin_pos[1]) + str(fin_pos[0])
         
@@ -122,45 +125,95 @@ class ChessGame:
         pygame.quit()
         sys.exit()   
 
+    def agents_game_vista(self, agent1, agent2):
+        # Crear la ventana
+        pygame.init()
+        screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption("Tablero de Ajedrez")
+
+        self.print_tab(screen)
+        self.draw_pieces(self.board, screen)
+        pygame.display.flip()
+        pygame.time.Clock().tick(60)
+
+        trun_white = True
+        while not self.board.is_game_over():
+            if trun_white:
+                legal_moves = agent1.get_legal_moves(self.board)
+                action = agent1.choose_action(self.board, legal_moves)                
+                self.board.push(action)
+                trun_white = False
+            else:
+                legal_moves = agent2.get_legal_moves(self.board)
+                action = agent2.choose_action(self.board, legal_moves)                
+                self.board.push(action)
+                trun_white = True
+            
+            self.print_tab(screen)
+            self.draw_pieces(self.board, screen)
+            pygame.display.flip()
+            pygame.time.Clock().tick(60)
+
+        pygame.quit()
+        sys.exit() 
+
     def agents_game(self, agent1, agent2):
 
         board = chess.Board()
         trun_white = True
+        turns = 0
         while not board.is_game_over():
+            turns += 1
             if trun_white:
                 legal_moves = agent1.get_legal_moves(board)
-                action = agent1.choose_action(board, legal_moves)                
+                action = agent1.choose_action(board, legal_moves)
                 board.push(action)
                 trun_white = False
             else:
                 legal_moves = agent2.get_legal_moves(board)
-                action = agent2.choose_action(board, legal_moves)                
+                action = agent2.choose_action(board, legal_moves)
                 board.push(action)
                 trun_white = True
 
+        print(turns)
         return board.result()
 
 
     def competi(self, agent1, agent2, num_match):
         results = []
-        for _ in range(num_match):
-            result = self.agents_game(agent1=agent1, agent2=agent2)
-            print(result)
-            if result == None:
-                results.append(0)
-            elif result == "0-1":
-                results.append(-1)
+        for x in range(num_match):
+            print("Init Game", x)
+            white = random.randint(1, 2)
+            if white == 1:
+                result = self.agents_game(agent1=agent1, agent2=agent2)
             else:
-                results.append(1)
-        agent1.quit()
-        agent2.quit()
+                result = self.agents_game(agent1=agent2, agent2=agent1)
+
+            res = 1
+            if result == None:
+                res = 0
+            elif result == "0-1":
+                res = -1
+            
+            if white != 1:
+                res *= -1
+            
+            results.append(res)
+
         print(results)
 
 
 if __name__ == "__main__":
-    #agent1 = NNG_Agent("Models/NNG/model_200.h5")
-    agent2 = MCTS("Models/NNG/model_200_model_gran.h5", 50)
-
+    nng = NNG_Agent("Pythons/Models/NNG/model_200_model_gran.h5")
+    #stf = Stockfish("Pythons/Models/stockfish/stockfish-windows-x86-64-avx2.exe")
+    mcts = MCTS("Pythons/Models/NNG/model_200_model_gran.h5", 500)
+    #lc0 = Leela("Pythons/Models/LC0/lc0.exe", "Pythons/Models/LC0/791556.pb.gz")
+    
     game = ChessGame()
-    game.game(agent2)
+    print("NNG vs MCTS")
+    game.competi(nng, mcts, 51)
+
+    #game.game(mcts)
+    
+    print("end")
 
